@@ -8,7 +8,7 @@ states = ["ak", "al", "ar", "az", "ca", "co", "ct", "dc", "de", "fl", "ga",
           "tx", "ut", "va", "vt", "wa", "wi", "wv", "wy", "xx"]
 
 def download_state(state)
-  puts "\n\n-- Downloading Zip file for #{state}"
+  puts "\n\n-- Downloading Zip file for #{state.upcase}"
   Net::HTTP.start("www.irs.gov") do |http|
     resp = http.get("/pub/irs-soi/eo_#{state}.zip")
     open(File.join(Dir.pwd, "zips", "#{state}.zip"), "wb") { |file| file.write(resp.body) }
@@ -25,6 +25,15 @@ def unzip_file (file, destination)
    }
   }
 end
+
+def push_state_to_db(state)
+  puts "-- Pushing #{state.upcase} to remote database"
+  File.open(File.join(Dir.pwd, "extracted", "#{state}", "EO_#{state.upcase}.LST"), "r").each_line do |line|
+    STDOUT.write "."
+    STDOUT.flush
+    sleep 0.3
+  end 
+end
          
 namespace :igivemore do
   namespace :tax_status do
@@ -32,6 +41,7 @@ namespace :igivemore do
       states.each do |state|
         download_state state
         unzip_file File.join(Dir.pwd, "zips", "#{state}.zip"), File.join(Dir.pwd, "extracted", "#{state}")
+        push_state_to_db state
       end
     end
   end
